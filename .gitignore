@@ -1,4 +1,8 @@
-.Rproj
+.Rproj.user
+*.Rproj
 .Rhistory
 .RData
 .Ruserdata
+vignettes/*.html
+vignettes/*.md
+vignettes/*_cache
