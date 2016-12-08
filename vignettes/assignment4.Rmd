@@ -15,10 +15,15 @@ knitr::opts_chunk$set(fig.align = "center")
 knitr::opts_chunk$set(cache = TRUE)
 ```
 
-```{r, echo=FALSE, message=FALSE}
+```{r, echo=FALSE, eval=FALSE}
 library(readr)
 library(magrittr)
 library(dplyr)
+library(lme4)
+library(gee)
+library(MASS)
+library(geepack)
+library(sandwich)
 ```
 
 ## Introduction
@@ -29,44 +34,41 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam dignissim ipsum
 
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
 
-```{r, message=FALSE}
+```{r, echo=FALSE, eval=FALSE}
 read_csv("../inst/extdata/PtenAnalysisData.csv") ->
   assignment4_data
 ```
 
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
 
-```{r}
-```
+$$Y_{i,j}=\beta_0+\beta_1X_{i,j}+\epsilon_{i,j}$$
 
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
 
-```{r}
-
-```
+$$Y_i=\beta_0\bar{X_i}+\bar\epsilon_i$$
 
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
 
-Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
-
-```{r}
-```
+$$E[Y_{i,j}|X_{i,j}]=\beta_0+\beta_1X_{i,j}$$
 
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
 
-Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
-
-```{r}
-
-```
+$$Y_{i,j}=\beta_0+\beta_1ind_{i,1}+...+\beta_Kind_{i,K}+\beta_{K+1}X_{i,j}+\epsilon_{i,j}$$
 
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
 
-```{r}
+$$Y_{i,j}=\beta_0+\beta_1X_{i,j}+\theta_i+\epsilon_{i,j}$$
 
-```
+Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.^[Freedman, D. A. On The So-Called ‘Huber Sandwich Estimator’ and ‘Robust Standard Errors’. The American Statistician 60, 299–302 (2006).]
+
+$$\sum^n_{i=1}g_i(Y_i|\hat\theta)^Tg_i(Y_i|\hat\theta)$$
 
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
+
+$$\hat{V}=(A)^{-1}B(A)^{-1}$$
+
+Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
+
 
 ## Results
 
