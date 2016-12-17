@@ -15,15 +15,16 @@ knitr::opts_chunk$set(fig.align = "center")
 knitr::opts_chunk$set(cache = TRUE)
 ```
 
-```{r, echo=FALSE, eval=FALSE}
+```{r libraries, include=FALSE}
 library(readr)
 library(magrittr)
 library(dplyr)
-library(lme4)
 library(gee)
-library(MASS)
-library(geepack)
-library(sandwich)
+library(lme4)
+library(lmerTest)
+# library(MASS)
+# library(geepack)
+# library(sandwich)
 ```
 
 ## Introduction
@@ -34,7 +35,7 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam dignissim ipsum
 
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
 
-```{r, echo=FALSE, eval=FALSE}
+```{r}
 read_csv("../inst/extdata/PtenAnalysisData.csv") ->
   assignment4_data
 ```
@@ -43,29 +44,43 @@ Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viv
 
 $$Y_{i,j}=\beta_0+\beta_1X_{i,j}+\epsilon_{i,j}$$
 
+<p class = "caption">Equation 2 - Proportional Hazard as a Function of Time</p>
+
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
 
 $$Y_i=\beta_0\bar{X_i}+\bar\epsilon_i$$
+
+<p class = "caption">Equation 2 - Proportional Hazard as a Function of Time</p>
 
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
 
 $$E[Y_{i,j}|X_{i,j}]=\beta_0+\beta_1X_{i,j}$$
 
+<p class = "caption">Equation 2 - Proportional Hazard as a Function of Time</p>
+
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
 
 $$Y_{i,j}=\beta_0+\beta_1ind_{i,1}+...+\beta_Kind_{i,K}+\beta_{K+1}X_{i,j}+\epsilon_{i,j}$$
+
+<p class = "caption">Equation 2 - Proportional Hazard as a Function of Time</p>
 
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
 
 $$Y_{i,j}=\beta_0+\beta_1X_{i,j}+\theta_i+\epsilon_{i,j}$$
 
+<p class = "caption">Equation 2 - Proportional Hazard as a Function of Time</p>
+
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.^[Freedman, D. A. On The So-Called ‘Huber Sandwich Estimator’ and ‘Robust Standard Errors’. The American Statistician 60, 299–302 (2006).]
 
 $$\sum^n_{i=1}g_i(Y_i|\hat\theta)^Tg_i(Y_i|\hat\theta)$$
 
+<p class = "caption">Equation 2 - Proportional Hazard as a Function of Time</p>
+
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
 
 $$\hat{V}=(A)^{-1}B(A)^{-1}$$
+
+<p class = "caption">Equation 2 - Proportional Hazard as a Function of Time</p>
 
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
 
@@ -74,13 +89,95 @@ Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viv
 
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
 
-Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
+```{r}
+assignment4_data %<>%
+  mutate(mouseid = as.factor(mouseid)) %>%
+  mutate(fa = gsub("0", "Control", fa)) %>%
+  mutate(fa = gsub("1", "Fatty Acid", fa)) %>%
+  mutate(fa = gsub("2", "Vehicle", fa)) %>%
+  mutate(fa = as.factor(fa)) %>%
+  mutate(pten = gsub("0", "Control", pten)) %>%
+  mutate(pten = gsub("1", "Knockout", pten)) %>%
+  mutate(pten = as.factor(pten))
+```
 
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
 
-Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
+```{r}
+assignment4_data %>%
+  filter(fa != "Control") %>%
+  filter(pten == "Control") %$%
+  lm(somasize ~ fa)
+```
 
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
+
+```{r}
+assignment4_data %>%
+  filter(fa != "Control") %>%
+  filter(pten == "Control") %>% 
+  group_by(mouseid) %>%
+  summarise(meanss_pten = mean(meanss_pten), 
+            propfa = sum(fa == "Vehicle") / n()) %$% 
+  lm(meanss_pten ~ propfa)
+```
+
+Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
+
+```{r}
+assignment4_data %>%
+  filter(fa != "Control") %>%
+  filter(pten == "Control") %>% 
+  group_by(mouseid) %>%
+  summarise(meanss_pten = mean(meanss_pten), n = n(), 
+            propfa = sum(fa == "Vehicle") / n) %$%
+  lm(meanss_pten ~ propfa, weights = n)
+```
+
+Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
+
+```{r}
+assignment4_data %>%
+  filter(fa != "Control") %>%
+  mutate(fa = factor(fa)) %>%
+  filter(pten == "Control") %>%
+  mutate(pten = factor(pten)) %$%
+  gee(somasize ~ fa, id = mouseid, corstr = "exchangeable")
+```
+
+
+Curabitur et rhoncus felis, id facilisis tellus. Fusce fermentum nisl eu sem convallis, at cursus est tristique. Maecenas non ante mi. Sed aliquam tincidunt pharetra. Nunc in ipsum dolor. Pellentesque scelerisque libero nec libero vehicula aliquet. Nullam sed neque vel turpis egestas auctor. Sed congue libero id nunc placerat, et molestie libero malesuada. Cras mollis dui a scelerisque accumsan.
+
+```{r}
+assignment4_data %>%
+  filter(fa != "Control") %>%
+  filter(pten == "Control") %$%
+  lmer(somasize ~ fa + (1 | mouseid))
+```
+
+Curabitur et rhoncus felis, id facilisis tellus. Fusce fermentum nisl eu sem convallis, at cursus est tristique. Maecenas non ante mi. Sed aliquam tincidunt pharetra. Nunc in ipsum dolor. Pellentesque scelerisque libero nec libero vehicula aliquet. Nullam sed neque vel turpis egestas auctor. Sed congue libero id nunc placerat, et molestie libero malesuada. Cras mollis dui a scelerisque accumsan.
+
+```{r}
+
+```
+
+Curabitur et rhoncus felis, id facilisis tellus. Fusce fermentum nisl eu sem convallis, at cursus est tristique. Maecenas non ante mi. Sed aliquam tincidunt pharetra. Nunc in ipsum dolor. Pellentesque scelerisque libero nec libero vehicula aliquet. Nullam sed neque vel turpis egestas auctor. Sed congue libero id nunc placerat, et molestie libero malesuada. Cras mollis dui a scelerisque accumsan.
+
+```{r}
+
+```
+
+Curabitur et rhoncus felis, id facilisis tellus. Fusce fermentum nisl eu sem convallis, at cursus est tristique. Maecenas non ante mi. Sed aliquam tincidunt pharetra. Nunc in ipsum dolor. Pellentesque scelerisque libero nec libero vehicula aliquet. Nullam sed neque vel turpis egestas auctor. Sed congue libero id nunc placerat, et molestie libero malesuada. Cras mollis dui a scelerisque accumsan.
+
+```{r}
+
+```
+
+Curabitur et rhoncus felis, id facilisis tellus. Fusce fermentum nisl eu sem convallis, at cursus est tristique. Maecenas non ante mi. Sed aliquam tincidunt pharetra. Nunc in ipsum dolor. Pellentesque scelerisque libero nec libero vehicula aliquet. Nullam sed neque vel turpis egestas auctor. Sed congue libero id nunc placerat, et molestie libero malesuada. Cras mollis dui a scelerisque accumsan.
+
+```{r}
+
+```
 
 Curabitur et rhoncus felis, id facilisis tellus. Fusce fermentum nisl eu sem convallis, at cursus est tristique. Maecenas non ante mi. Sed aliquam tincidunt pharetra. Nunc in ipsum dolor. Pellentesque scelerisque libero nec libero vehicula aliquet. Nullam sed neque vel turpis egestas auctor. Sed congue libero id nunc placerat, et molestie libero malesuada. Cras mollis dui a scelerisque accumsan.
 
