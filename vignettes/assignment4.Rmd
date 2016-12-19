@@ -23,6 +23,7 @@ library(dplyr)
 library(gee)
 library(lme4)
 library(lmerTest)
+library(psych)
 ```
 
 ## Introduction
@@ -77,6 +78,11 @@ assignment4_data %>%
   mutate(fa = factor(fa)) %>% 
   mutate(somasize = somasize * -1) ->
   table6_neuron
+
+assignment4_data %>%
+  group_by(mouseid) %>%
+  summarise(somasize = mean(somasize)) ->
+  icc_mouse
 ```
 
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
@@ -136,49 +142,59 @@ model_kable <- function(model_list, model_names) {
                                     "95% CI Lower Limit", "95% CI Upper Limit"),
           align = "llllr", format.args = list(nsmall = 3, scientific = FALSE))
 }
+
+icc_kable <- function(icc_object) {
+  icc_object$results[3, ] %>%
+    kable(digits = 3, row.names = FALSE, col.names = c("Type", "ICC", "F",
+                                                       "DF1", "DF2", "P-Value",
+                                                       "95% CI Lower Limit", 
+                                                       "95% CI Upper Limit"),
+          align = "lllllllr", 
+          format.args = list(nsmall = 3, scientific = FALSE))
+}
 ```
 
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
 
 $$Y_{i,j}=\beta_0+\beta_1X_{i,j}+\epsilon_{i,j}$$
 
-<p class = "caption">Equation 2 - Proportional Hazard as a Function of Time</p>
+<p class = "caption">Equation 1 - Unweighted Linear Regression Model</p>
 
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
 
 $$Y_i=\beta_0\bar{X_i}+\bar\epsilon_i$$
 
-<p class = "caption">Equation 2 - Proportional Hazard as a Function of Time</p>
+<p class = "caption">Equation 2 - Weighted Linear Regression Model</p>
 
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
 
 $$E[Y_{i,j}|X_{i,j}]=\beta_0+\beta_1X_{i,j}$$
 
-<p class = "caption">Equation 2 - Proportional Hazard as a Function of Time</p>
+<p class = "caption">Equation 3 - Marginal Regression Model</p>
 
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
 
 $$Y_{i,j}=\beta_0+\beta_1ind_{i,1}+...+\beta_Kind_{i,K}+\beta_{K+1}X_{i,j}+\epsilon_{i,j}$$
 
-<p class = "caption">Equation 2 - Proportional Hazard as a Function of Time</p>
+<p class = "caption">Equation 4 - Fixed-Effects Regression Model</p>
 
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
 
 $$Y_{i,j}=\beta_0+\beta_1X_{i,j}+\theta_i+\epsilon_{i,j}$$
 
-<p class = "caption">Equation 2 - Proportional Hazard as a Function of Time</p>
+<p class = "caption">Equation 5 - Fixed-Effects Regression Model</p>
 
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.^[Freedman, D. A. On The So-Called ‘Huber Sandwich Estimator’ and ‘Robust Standard Errors’. The American Statistician 60, 299–302 (2006).]
 
 $$\sum^n_{i=1}g_i(Y_i|\hat\theta)^Tg_i(Y_i|\hat\theta)$$
 
-<p class = "caption">Equation 2 - Proportional Hazard as a Function of Time</p>
+<p class = "caption">Equation 6 - Huber Sandwich Estimator</p>
 
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
 
 $$\hat{V}=(A)^{-1}B(A)^{-1}$$
 
-<p class = "caption">Equation 2 - Proportional Hazard as a Function of Time</p>
+<p class = "caption">Equation 7 - Huber Sandwich Estimator Variance Matrix</p>
 
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
 
@@ -217,7 +233,7 @@ list(table3_row1, table3_row2, table3_row3, table3_row4, table3_row5) %>%
                 "Marginal regression", "Mixed-effect regression"))
 ```
 
-<p class = "caption">Equation 2 - Proportional Hazard as a Function of Time</p>
+<p class = "caption">Table 1 - Reproduced results of fatty acid exposure on soma size from different regression models (Table 3)</p>
 
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
 
@@ -248,7 +264,7 @@ list(table4_row1, table4_row2, table4_row3, table4_row4, table4_row5) %>%
                 "Mixed effect regression with Pten as an additional predictor"))
 ```
 
-<p class = "caption">Equation 2 - Proportional Hazard as a Function of Time</p>
+<p class = "caption">Table 2 - Reproduced results of Pten knockdown effect on soma size from different regression models (Table 4)</p>
 
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
 
@@ -275,7 +291,7 @@ list(table5_row1, table5_row2, table5_row3, table5_row4) %>%
                 "Mixed-effect regression with Pten as an additional predictor"))
 ```
 
-<p class = "caption">Equation 2 - Proportional Hazard as a Function of Time</p>
+<p class = "caption">Table 3 - Reproduced results of (Pten) knockdown effect on soma size from different regression models (Table 5)</p>
 
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
 
@@ -297,9 +313,20 @@ list(table6_row1, table6_row2, table6_row3) %>%
                 "Mixed-effect regression"))
 ```
 
-<p class = "caption">Equation 2 - Proportional Hazard as a Function of Time</p>
+<p class = "caption">Table 4 - Reproduced results of interaction between Pten knockdown and fatty acid exposure models (Table 6)</p>
 
 Curabitur et rhoncus felis, id facilisis tellus. Fusce fermentum nisl eu sem convallis, at cursus est tristique. Maecenas non ante mi. Sed aliquam tincidunt pharetra. Nunc in ipsum dolor. Pellentesque scelerisque libero nec libero vehicula aliquet. Nullam sed neque vel turpis egestas auctor. Sed congue libero id nunc placerat, et molestie libero malesuada. Cras mollis dui a scelerisque accumsan.
+
+```{r}
+icc_mouse %>%
+  data.matrix() %>%
+  ICC() %>%
+  icc_kable()
+```
+
+<p class = "caption">Table 5 - Reproduced intraclass correlation coefficient (ICC)</p>
+
+Phasellus eu mollis odio. Etiam tincidunt eu est nec semper. Nulla bibendum enim purus, sit amet luctus lacus rhoncus non. Vivamus quis dignissim risus. Maecenas rhoncus imperdiet nulla sed congue. Duis id lacus felis. Aenean maximus accumsan urna. Etiam aliquam tortor justo, ut tempus orci sollicitudin ut. Fusce tristique enim ex, ac efficitur ipsum tincidunt vitae. Phasellus a imperdiet nisi, sit amet mattis dui. Nulla elementum pretium mi, at laoreet lectus semper nec. Proin vehicula a arcu in efficitur. Curabitur et fringilla ipsum.
 
 ## Discussion
 
