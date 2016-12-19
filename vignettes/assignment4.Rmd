@@ -11,20 +11,18 @@ css: style.css
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(fig.align = "center")
-knitr::opts_chunk$set(cache = TRUE)
-```
+library(devtools)
+install_github("schifferl/gee", dependencies = TRUE, build_vignettes = TRUE)
 
-```{r libraries, include=FALSE}
+library(knitr)
+opts_chunk$set(cache = TRUE, message = FALSE, warning = FALSE)
+
 library(readr)
 library(magrittr)
 library(dplyr)
 library(gee)
 library(lme4)
 library(lmerTest)
-# library(MASS)
-# library(geepack)
-# library(sandwich)
 ```
 
 ## Introduction
@@ -38,6 +36,106 @@ Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viv
 ```{r}
 read_csv("../inst/extdata/PtenAnalysisData.csv") ->
   assignment4_data
+
+assignment4_data %<>%
+  mutate(mouseid = as.factor(mouseid)) %>%
+  mutate(fa = gsub("0", "Control", fa)) %>%
+  mutate(fa = gsub("1", "Fatty Acid", fa)) %>%
+  mutate(fa = gsub("2", "Vehicle", fa)) %>%
+  mutate(fa = factor(fa)) %>%
+  mutate(pten = gsub("0", "Control", pten)) %>%
+  mutate(pten = gsub("1", "Knockout", pten)) %>%
+  mutate(pten = factor(pten))
+
+assignment4_data %>%
+  filter(fa != "Control") %>%
+  mutate(fa = factor(fa)) %>%
+  filter(pten == "Control") ->
+  table3_neuron
+
+table3_neuron %>%
+  group_by(mouseid) %>%
+  summarise(meanss_pten = mean(meanss_pten), n = n(),
+            prop_fa = sum(fa == "Vehicle") / n) ->
+  table3_mouse
+
+assignment4_data %>%
+  filter(fa == "Control") ->
+  table4_neuron
+
+table4_neuron %>%
+  group_by(mouseid) %>%
+  summarise(somasize = mean(somasize), prop = mean(prop),
+            meanss_all = mean(meanss_all), n = n()) ->
+  table5_mouse
+
+table4_neuron ->
+  table5_neuron
+
+assignment4_data %>%
+  filter(fa != "Control") %>%
+  mutate(fa = factor(fa)) %>% 
+  mutate(somasize = somasize * -1) ->
+  table6_neuron
+```
+
+Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
+
+```{r}
+model_extract <- function(model_object, model_name) {
+  model_class <- class(model_object)[1]
+  summary_object <- summary(model_object)
+  
+  if(model_class == "lm") {
+    model_coefficients <- summary_object$coefficients
+    model_ci <- confint(model_object)
+    coefficient_row <- nrow(model_coefficients)
+    ci_row <- nrow(model_ci)
+    
+    coefficient <- model_coefficients[coefficient_row, 1]
+    standard_error <- model_coefficients[coefficient_row, 2]
+    p_value <- model_coefficients[coefficient_row, 4]
+    lower_ci <- model_ci[ci_row, 1]
+    upper_ci <- model_ci[ci_row, 2]
+  }
+  
+  if(model_class == "gee") {
+    model_coefficients <- summary_object$coefficients
+    coefficient_row <- nrow(model_coefficients)
+    robust_z <- model_coefficients[coefficient_row, 5]
+    
+    coefficient <- model_coefficients[coefficient_row, 1]
+    standard_error <- model_coefficients[coefficient_row, 4]
+    p_value <- 2 * (1 - pnorm(abs(robust_z)))
+    lower_ci <- coefficient - qnorm(0.975) * standard_error
+    upper_ci <- coefficient + qnorm(0.975) * standard_error
+  }
+  
+  if(model_class == "merModLmerTest") {
+    model_coefficients <- summary_object$coefficients
+    model_ci <- confint(model_object)
+    coefficient_row <- nrow(model_coefficients)
+    ci_row <- nrow(model_ci)
+    
+    coefficient <- model_coefficients[coefficient_row, 1]
+    standard_error <- model_coefficients[coefficient_row, 2]
+    p_value <- model_coefficients[coefficient_row, 5]
+    lower_ci <- model_ci[ci_row, 1]
+    upper_ci <- model_ci[ci_row, 2]
+  }
+  
+  model_table <- cbind(coefficient, standard_error, p_value, lower_ci, upper_ci)
+  rownames(model_table) <- model_name
+  model_table
+}
+
+model_kable <- function(model_list, model_names) {
+  mapply(model_extract, model_list, model_names, SIMPLIFY = FALSE) %>%
+    Reduce(rbind, .) %>%
+    kable(digits = 3, col.names = c("Coefficient", "Standard Error", "P-Value",
+                                    "95% CI Lower Limit", "95% CI Upper Limit"),
+          align = "llllr", format.args = list(nsmall = 3, scientific = FALSE))
+}
 ```
 
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
@@ -89,95 +187,117 @@ Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viv
 
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
 
+Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
+
 ```{r}
-assignment4_data %<>%
-  mutate(mouseid = as.factor(mouseid)) %>%
-  mutate(fa = gsub("0", "Control", fa)) %>%
-  mutate(fa = gsub("1", "Fatty Acid", fa)) %>%
-  mutate(fa = gsub("2", "Vehicle", fa)) %>%
-  mutate(fa = as.factor(fa)) %>%
-  mutate(pten = gsub("0", "Control", pten)) %>%
-  mutate(pten = gsub("1", "Knockout", pten)) %>%
-  mutate(pten = as.factor(pten))
+table3_neuron %$%
+  lm(somasize ~ fa) ->
+  table3_row1
+
+table3_mouse %$%
+  lm(meanss_pten ~ prop_fa) ->
+  table3_row2
+
+table3_mouse %$%
+  lm(meanss_pten ~ prop_fa, weights = n) ->
+  table3_row3
+
+table3_neuron %$%
+  gee(somasize ~ fa, id = mouseid, corstr = "exchangeable") ->
+  table3_row4
+
+table3_neuron %$%
+  lmer(somasize ~ fa + (1 | mouseid)) ->
+  table3_row5
+
+list(table3_row1, table3_row2, table3_row3, table3_row4, table3_row5) %>%
+  model_kable(c("Neuron-level linear regression",
+                "Mouse-level regression (mean); no weighting",
+                "Mouse-level regression (mean); analytic weights",
+                "Marginal regression", "Mixed-effect regression"))
 ```
+
+<p class = "caption">Equation 2 - Proportional Hazard as a Function of Time</p>
 
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
 
 ```{r}
-assignment4_data %>%
-  filter(fa != "Control") %>%
-  filter(pten == "Control") %$%
-  lm(somasize ~ fa)
+table4_neuron %$%
+  lm(somasize ~ pten) ->
+  table4_row1
+
+table4_neuron %$%
+  gee(somasize ~ pten, id = mouseid, corstr = "exchangeable") ->
+  table4_row2
+
+table4_neuron %$%
+  lm(somasize ~ mouseid + pten) ->
+  table4_row3
+
+table4_neuron %$%
+  lmer(somasize ~ pten + (1 | mouseid)) ->
+  table4_row4
+
+table4_neuron %$%
+  lmer(somasize ~ prop + pten + (1 | mouseid)) ->
+  table4_row5
+
+list(table4_row1, table4_row2, table4_row3, table4_row4, table4_row5) %>%
+  model_kable(c("Neuron-level linear regression", "Marginal regression",
+                "Fixed-effect regression", "Mixed-effect regression",
+                "Mixed effect regression with Pten as an additional predictor"))
 ```
+
+<p class = "caption">Equation 2 - Proportional Hazard as a Function of Time</p>
 
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
 
 ```{r}
-assignment4_data %>%
-  filter(fa != "Control") %>%
-  filter(pten == "Control") %>% 
-  group_by(mouseid) %>%
-  summarise(meanss_pten = mean(meanss_pten), 
-            propfa = sum(fa == "Vehicle") / n()) %$% 
-  lm(meanss_pten ~ propfa)
+table5_mouse %$%
+  lm(meanss_all ~ prop, weights = n) ->
+  table5_row1
+
+table5_neuron %$%
+  gee(somasize ~ pten + prop, id = mouseid, corstr = "exchangeable") ->
+  table5_row2
+
+table5_neuron %$%
+  lmer(somasize ~ prop + (1 | mouseid)) ->
+  table5_row3
+
+table5_neuron %$%
+  lmer(somasize ~ pten + prop + (1 | mouseid)) ->
+  table5_row4
+
+list(table5_row1, table5_row2, table5_row3, table5_row4) %>%
+  model_kable(c("Mouse-level regression (Pten); weighting", 
+                "Marginal regression", "Mixed-effect regression", 
+                "Mixed-effect regression with Pten as an additional predictor"))
 ```
+
+<p class = "caption">Equation 2 - Proportional Hazard as a Function of Time</p>
 
 Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
 
 ```{r}
-assignment4_data %>%
-  filter(fa != "Control") %>%
-  filter(pten == "Control") %>% 
-  group_by(mouseid) %>%
-  summarise(meanss_pten = mean(meanss_pten), n = n(), 
-            propfa = sum(fa == "Vehicle") / n) %$%
-  lm(meanss_pten ~ propfa, weights = n)
+table6_neuron %$%
+  gee(somasize ~ fa * pten, id = mouseid, corstr = "exchangeable") ->
+  table6_row1
+
+table6_neuron %$%
+  lm(somasize ~ fa * pten + mouseid) ->
+  table6_row2
+
+table6_neuron %$%
+  lmer(somasize ~ fa * pten + (1 | mouseid)) ->
+  table6_row3
+
+list(table6_row1, table6_row2, table6_row3) %>%
+  model_kable(c("Marginal regression", "Fixed-effect regression", 
+                "Mixed-effect regression"))
 ```
 
-Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
-
-```{r}
-assignment4_data %>%
-  filter(fa != "Control") %>%
-  mutate(fa = factor(fa)) %>%
-  filter(pten == "Control") %>%
-  mutate(pten = factor(pten)) %$%
-  gee(somasize ~ fa, id = mouseid, corstr = "exchangeable")
-```
-
-
-Curabitur et rhoncus felis, id facilisis tellus. Fusce fermentum nisl eu sem convallis, at cursus est tristique. Maecenas non ante mi. Sed aliquam tincidunt pharetra. Nunc in ipsum dolor. Pellentesque scelerisque libero nec libero vehicula aliquet. Nullam sed neque vel turpis egestas auctor. Sed congue libero id nunc placerat, et molestie libero malesuada. Cras mollis dui a scelerisque accumsan.
-
-```{r}
-assignment4_data %>%
-  filter(fa != "Control") %>%
-  filter(pten == "Control") %$%
-  lmer(somasize ~ fa + (1 | mouseid))
-```
-
-Curabitur et rhoncus felis, id facilisis tellus. Fusce fermentum nisl eu sem convallis, at cursus est tristique. Maecenas non ante mi. Sed aliquam tincidunt pharetra. Nunc in ipsum dolor. Pellentesque scelerisque libero nec libero vehicula aliquet. Nullam sed neque vel turpis egestas auctor. Sed congue libero id nunc placerat, et molestie libero malesuada. Cras mollis dui a scelerisque accumsan.
-
-```{r}
-
-```
-
-Curabitur et rhoncus felis, id facilisis tellus. Fusce fermentum nisl eu sem convallis, at cursus est tristique. Maecenas non ante mi. Sed aliquam tincidunt pharetra. Nunc in ipsum dolor. Pellentesque scelerisque libero nec libero vehicula aliquet. Nullam sed neque vel turpis egestas auctor. Sed congue libero id nunc placerat, et molestie libero malesuada. Cras mollis dui a scelerisque accumsan.
-
-```{r}
-
-```
-
-Curabitur et rhoncus felis, id facilisis tellus. Fusce fermentum nisl eu sem convallis, at cursus est tristique. Maecenas non ante mi. Sed aliquam tincidunt pharetra. Nunc in ipsum dolor. Pellentesque scelerisque libero nec libero vehicula aliquet. Nullam sed neque vel turpis egestas auctor. Sed congue libero id nunc placerat, et molestie libero malesuada. Cras mollis dui a scelerisque accumsan.
-
-```{r}
-
-```
-
-Curabitur et rhoncus felis, id facilisis tellus. Fusce fermentum nisl eu sem convallis, at cursus est tristique. Maecenas non ante mi. Sed aliquam tincidunt pharetra. Nunc in ipsum dolor. Pellentesque scelerisque libero nec libero vehicula aliquet. Nullam sed neque vel turpis egestas auctor. Sed congue libero id nunc placerat, et molestie libero malesuada. Cras mollis dui a scelerisque accumsan.
-
-```{r}
-
-```
+<p class = "caption">Equation 2 - Proportional Hazard as a Function of Time</p>
 
 Curabitur et rhoncus felis, id facilisis tellus. Fusce fermentum nisl eu sem convallis, at cursus est tristique. Maecenas non ante mi. Sed aliquam tincidunt pharetra. Nunc in ipsum dolor. Pellentesque scelerisque libero nec libero vehicula aliquet. Nullam sed neque vel turpis egestas auctor. Sed congue libero id nunc placerat, et molestie libero malesuada. Cras mollis dui a scelerisque accumsan.
 
