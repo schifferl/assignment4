@@ -28,13 +28,13 @@ library(psych)
 
 ## Introduction
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam dignissim ipsum neque, in euismod nunc dignissim quis. Cras suscipit, leo eget auctor tincidunt, ipsum nulla rhoncus nunc, vitae ultrices lacus mi a libero. Morbi mollis nisi dolor, at fermentum nunc imperdiet nec. Vestibulum ultrices finibus magna, at condimentum dui vehicula vel. Curabitur mattis fermentum interdum. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; In ut tellus mauris. Curabitur porta lacinia ante. Pellentesque vestibulum sapien ut diam fringilla, sit amet molestie lorem scelerisque. Phasellus a feugiat magna. Morbi accumsan risus non commodo tristique. Cras luctus varius sem nec pulvinar. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Curabitur vitae ipsum efficitur, lacinia orci vitae, mattis justo.^[Moen, E. L., Fricano-Kugler, C. J., Luikart, B. W. & O’Malley, A. J. Analyzing Clustered Data: Why and How to Account for Multiple Observations Nested within a Study Participant? PLOS ONE 11, e0146721 (2016).]
+Recent statistical work within the discipline of neuroscience has been insufficient and lacking in well reasoned assumptions that are otherwise necessary for causal inference and reproducibility. In particular, where cluster data are present they must be analyzed as such, given that multiple measures within a subject will be auto-correlated. To demonstrate the detriments of using naïve measures alone, Moen et al. published an article detailing the comparative approaches of statistical methods within a clustered dataset. In mice models of soma size both pten knockout (within mice) and fatty acid (among mice) exposures were studied and analyzed using a variety of model approaches. Presented here is an attempt to reconstruct findings from the original publication, particularly Tables 3 through 6 and the interclass correlation (ICC) calculation.^[Moen, E. L., Fricano-Kugler, C. J., Luikart, B. W. & O’Malley, A. J. Analyzing Clustered Data: Why and How to Account for Multiple Observations Nested within a Study Participant? PLOS ONE 11, e0146721 (2016).]
 
 ## Methods
 
-Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
+To reproduce both Tables 3 through 6 and the ICC, data from the original publication was downloaded from GitHub in the form of a CSV file, as made available by the authors. The file was read into R version 3.3.2 using the readr package and variables were coerced to appropriate types using the magrittr and dplyr packages.^[R Core Team (2016). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.]<sup>,</sup> ^[Hadley Wickham, Jim Hester and Romain Francois (2016). readr: Read Tabular Data. R package version 1.0.0. https://CRAN.R-project.org/package=readr]<sup>,</sup> ^[Stefan Milton Bache and Hadley Wickham (2014). magrittr: A Forward-Pipe Operator for R. R package version 1.5. https://CRAN.R-project.org/package=magrittr]<sup>,</sup> ^[Hadley Wickham and Romain Francois (2016). dplyr: A Grammar of Data Manipulation. R package version 0.5.0. https://CRAN.R-project.org/package=dplyr] Similarly, subsetting of the experiment data was achieved using the magrittr and dplyr packages, with different models requiring varied subsetting and summary.^[Stefan Milton Bache and Hadley Wickham (2014). magrittr: A Forward-Pipe Operator for R. R package version 1.5. https://CRAN.R-project.org/package=magrittr]<sup>,</sup> ^[Hadley Wickham and Romain Francois (2016). dplyr: A Grammar of Data Manipulation. R package version 0.5.0. https://CRAN.R-project.org/package=dplyr] All syntax used for data manipulation is available on GitHub via the following link, https://github.com/schifferl/assignment4.
 
-```{r}
+```{r, echo=FALSE}
 read_csv("../inst/extdata/PtenAnalysisData.csv") ->
   assignment4_data
 
@@ -85,9 +85,53 @@ assignment4_data %>%
   icc_mouse
 ```
 
-Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
+It was necessary to consider five model approaches in order to reproduce the results of Moen et al., the details of which are as follows.
 
-```{r}
+First, a unweighted linear regression model, as shown in equation 1, was used to reconstruct the completely naïve models. Such models assumed no weighting and complete independence of repeated measures. This type of model was implemented in R using the stats package.^[R Core Team (2016). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.]
+
+$$Y_{i,j}=\beta_0+\beta_1X_{i,j}+\epsilon_{i,j}$$
+
+<p class = "caption">Equation 1 - Unweighted Linear Regression Model</p>
+
+Second, a weighted linear regression model, as shown in Equation 2, was used to reconstruct the naïve models that considered analytic weights. Such models assumed that the mean values of the variables sufficiently captured the variance of the repeated measures. This type of model was implemented in R using the stats package.^[R Core Team (2016). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.]
+
+$$Y_i=\beta_0\bar{X_i}+\bar\epsilon_i$$
+
+<p class = "caption">Equation 2 - Weighted Linear Regression Model</p>
+
+Third, a marginal regression model, as shown in Equation 3, was used to reconstruct the models that recognized the data as multilevel and collapsed over the margins of the levels. Such models, recognized the hierarchical nature of the data and retained inferential power by borrowing strength across the multiple tiers. This type of model was implemented in R using the gee package.^[Vincent J Carey. Ported to R by Thomas Lumley and Brian Ripley. Note that maintainers are not available to give advice on using a package they did not author. (2015). gee: Generalized Estimation Equation Solver. R package version 4.13-19. https://CRAN.R-project.org/package=gee]
+
+$$E[Y_{i,j}|X_{i,j}]=\beta_0+\beta_1X_{i,j}$$
+
+<p class = "caption">Equation 3 - Marginal Regression Model</p>
+
+Fourth, a fixed-effects regression model, as shown in Equation 4, was used to reconstruct the models of fixed-effects. Such models assumed that effect estimates were related to an underlying normal distribution of possible effect estimates. This type of model was implemented in R using the stats package.^[R Core Team (2016). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.]
+
+$$Y_{i,j}=\beta_0+\beta_1ind_{i,1}+...+\beta_Kind_{i,K}+\beta_{K+1}X_{i,j}+\epsilon_{i,j}$$
+
+<p class = "caption">Equation 4 - Fixed-Effects Regression Model</p>
+
+Fifth, a mixed-effects regression model, as shown in Equation 5, was used to reconstruct the models of mixed-effects. Such models assumed that outcomes were best estimated by combining fixed and normally distributed random effects, with normally distributed fixed residuals. This type of model was implemented in R using the lme4 and lmerTest packages.^[Douglas Bates, Martin Maechler, Ben Bolker, Steve Walker (2015). Fitting Linear Mixed-Effects Models Using lme4. Journal of Statistical Software, 67(1), 1-48. doi:10.18637/jss.v067.i01.]<sup>,</sup> ^[Alexandra Kuznetsova, Per Bruun Brockhoff and Rune Haubo Bojesen Christensen (2016). lmerTest: Tests in Linear Mixed Effects Models. R package version 2.0-33. https://CRAN.R-project.org/package=lmerTest]
+
+$$Y_{i,j}=\beta_0+\beta_1X_{i,j}+\theta_i+\epsilon_{i,j}$$
+
+<p class = "caption">Equation 5 - Mixed-Effects Regression Model</p>
+
+Additionally, in order to account for differences in methods between Stata, the software of the original publication, and R it was necessary to consider the Huber Sandwich Estimator, as seen in Equation 6. ^[Freedman, D. A. On The So-Called ‘Huber Sandwich Estimator’ and ‘Robust Standard Errors’. The American Statistician 60, 299–302 (2006).]
+
+$$\sum^n_{i=1}g_i(Y_i|\hat\theta)^Tg_i(Y_i|\hat\theta)$$
+
+<p class = "caption">Equation 6 - Huber Sandwich Estimator</p>
+
+From the Huber Sandwich Estimator, robust standard errors could be estimated by computing the roots of the diagonals of the variance matrix, as shown in Equation 7. 
+
+$$\hat{V}=(A)^{-1}B(A)^{-1}$$
+
+<p class = "caption">Equation 7 - Huber Sandwich Estimator Variance Matrix</p>
+
+Finally, three custom functions using the knitr package were written to abstract the results of model objects and statistical tests into tables.^[Yihui Xie (2016). knitr: A General-Purpose Package for Dynamic Report Generation in R. R package version 1.15.1.]<sup>,</sup> ^[Yihui Xie (2015) Dynamic Documents with R and knitr. 2nd edition. Chapman and Hall/CRC. ISBN 978-1498716963]<sup>,</sup> ^[Yihui Xie (2014) knitr: A Comprehensive Tool for Reproducible Research in R. In Victoria Stodden, Friedrich Leisch and Roger D. Peng, editors, Implementing Reproducible Computational Research. Chapman and Hall/CRC. ISBN 978-1466561595] Methods used to display the table of type 3 ICC drew upon ICC methods written in the psych package.^[Revelle, W. (2016) psych: Procedures for Personality and Psychological Research, Northwestern University, Evanston, Illinois, USA, https://CRAN.R-project.org/package=psych Version = 1.6.9.]
+
+```{r, echo=FALSE}
 model_extract <- function(model_object, model_name) {
   model_class <- class(model_object)[1]
   summary_object <- summary(model_object)
@@ -130,7 +174,13 @@ model_extract <- function(model_object, model_name) {
     upper_ci <- model_ci[ci_row, 2]
   }
   
-  model_table <- cbind(coefficient, standard_error, p_value, lower_ci, upper_ci)
+  if(p_value < 0.001) {
+    p_value <- "< 0.001"
+  } else {
+    p_value <- round(p_value, 3)
+  }
+  
+  model_table <- data.frame(coefficient, standard_error, p_value, lower_ci, upper_ci)
   rownames(model_table) <- model_name
   model_table
 }
@@ -154,58 +204,11 @@ icc_kable <- function(icc_object) {
 }
 ```
 
-Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
-
-$$Y_{i,j}=\beta_0+\beta_1X_{i,j}+\epsilon_{i,j}$$
-
-<p class = "caption">Equation 1 - Unweighted Linear Regression Model</p>
-
-Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
-
-$$Y_i=\beta_0\bar{X_i}+\bar\epsilon_i$$
-
-<p class = "caption">Equation 2 - Weighted Linear Regression Model</p>
-
-Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
-
-$$E[Y_{i,j}|X_{i,j}]=\beta_0+\beta_1X_{i,j}$$
-
-<p class = "caption">Equation 3 - Marginal Regression Model</p>
-
-Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
-
-$$Y_{i,j}=\beta_0+\beta_1ind_{i,1}+...+\beta_Kind_{i,K}+\beta_{K+1}X_{i,j}+\epsilon_{i,j}$$
-
-<p class = "caption">Equation 4 - Fixed-Effects Regression Model</p>
-
-Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
-
-$$Y_{i,j}=\beta_0+\beta_1X_{i,j}+\theta_i+\epsilon_{i,j}$$
-
-<p class = "caption">Equation 5 - Fixed-Effects Regression Model</p>
-
-Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.^[Freedman, D. A. On The So-Called ‘Huber Sandwich Estimator’ and ‘Robust Standard Errors’. The American Statistician 60, 299–302 (2006).]
-
-$$\sum^n_{i=1}g_i(Y_i|\hat\theta)^Tg_i(Y_i|\hat\theta)$$
-
-<p class = "caption">Equation 6 - Huber Sandwich Estimator</p>
-
-Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
-
-$$\hat{V}=(A)^{-1}B(A)^{-1}$$
-
-<p class = "caption">Equation 7 - Huber Sandwich Estimator Variance Matrix</p>
-
-Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
-
-
 ## Results
 
-Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
+As shown in Table 1, it was possible to reproduce the results of fatty acid exposure on soma size from different regression models almost without any deviation from the published values. However, it is noted that the standard errors of marginal and mixed-effect regression did not match the published values, being slightly smaller and larger, respectively.
 
-Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
-
-```{r}
+```{r, echo=FALSE}
 table3_neuron %$%
   lm(somasize ~ fa) ->
   table3_row1
@@ -235,9 +238,9 @@ list(table3_row1, table3_row2, table3_row3, table3_row4, table3_row5) %>%
 
 <p class = "caption">Table 1 - Reproduced results of fatty acid exposure on soma size from different regression models (Table 3)</p>
 
-Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
+As shown in Table 2, it was possible to reproduce the results of Pten knockdown effect on soma size from different regression models almost without any deviation from the published values. However, it is noted that the standard errors of marginal and mixed-effect regression did not match the published values, being slightly smaller in either case.
 
-```{r}
+```{r, echo=FALSE}
 table4_neuron %$%
   lm(somasize ~ pten) ->
   table4_row1
@@ -266,9 +269,9 @@ list(table4_row1, table4_row2, table4_row3, table4_row4, table4_row5) %>%
 
 <p class = "caption">Table 2 - Reproduced results of Pten knockdown effect on soma size from different regression models (Table 4)</p>
 
-Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
+As shown in Table 3, it was possible to reproduce the results of (Pten) knockdown effect on soma size from different regression models almost without any deviation from the published values, to the exception of the mixed-effect regression estimate. Additionally, it is noted that the standard errors of marginal and mixed-effect regression did not match the published values, being slightly smaller and larger, respectively.
 
-```{r}
+```{r, echo=FALSE}
 table5_mouse %$%
   lm(meanss_all ~ prop, weights = n) ->
   table5_row1
@@ -293,9 +296,9 @@ list(table5_row1, table5_row2, table5_row3, table5_row4) %>%
 
 <p class = "caption">Table 3 - Reproduced results of (Pten) knockdown effect on soma size from different regression models (Table 5)</p>
 
-Sed metus auctor, interdum justo ut, tempus mi. Etiam feugiat lectus id arcu viverra lacinia. Suspendisse potenti. Cras eu nunc non mi posuere mollis at vel ante. Nullam consequat ligula quis diam efficitur, eget aliquet tellus porttitor. Morbi varius quam eget urna viverra maximus. Quisque ac rutrum nunc, ut euismod risus.
+As shown in Table 4, it was only possible to reproduce the of interaction between Pten knockdown and fatty acid exposure models to a limited extent, with the coefficient for marginal regression alone attaining the published value. Additionally, it is noted that it was not possible to reproduce any of the published standard errors.
 
-```{r}
+```{r, echo=FALSE}
 table6_neuron %$%
   gee(somasize ~ fa * pten, id = mouseid, corstr = "exchangeable") ->
   table6_row1
@@ -315,9 +318,9 @@ list(table6_row1, table6_row2, table6_row3) %>%
 
 <p class = "caption">Table 4 - Reproduced results of interaction between Pten knockdown and fatty acid exposure models (Table 6)</p>
 
-Curabitur et rhoncus felis, id facilisis tellus. Fusce fermentum nisl eu sem convallis, at cursus est tristique. Maecenas non ante mi. Sed aliquam tincidunt pharetra. Nunc in ipsum dolor. Pellentesque scelerisque libero nec libero vehicula aliquet. Nullam sed neque vel turpis egestas auctor. Sed congue libero id nunc placerat, et molestie libero malesuada. Cras mollis dui a scelerisque accumsan.
+Finally, it was possible to reproduce the calculated intraclass correlation coefficient measure using type 3 ICC, as shown in Table 5. While the publication had a rounded value of 0.2 and no further information on confidence, the estimate shown below, when rounded, would be equal to the published value.
 
-```{r}
+```{r, echo=FALSE}
 icc_mouse %>%
   data.matrix() %>%
   ICC() %>%
@@ -326,12 +329,8 @@ icc_mouse %>%
 
 <p class = "caption">Table 5 - Reproduced intraclass correlation coefficient (ICC)</p>
 
-Phasellus eu mollis odio. Etiam tincidunt eu est nec semper. Nulla bibendum enim purus, sit amet luctus lacus rhoncus non. Vivamus quis dignissim risus. Maecenas rhoncus imperdiet nulla sed congue. Duis id lacus felis. Aenean maximus accumsan urna. Etiam aliquam tortor justo, ut tempus orci sollicitudin ut. Fusce tristique enim ex, ac efficitur ipsum tincidunt vitae. Phasellus a imperdiet nisi, sit amet mattis dui. Nulla elementum pretium mi, at laoreet lectus semper nec. Proin vehicula a arcu in efficitur. Curabitur et fringilla ipsum.
-
 ## Discussion
 
-Phasellus eu mollis odio. Etiam tincidunt eu est nec semper. Nulla bibendum enim purus, sit amet luctus lacus rhoncus non. Vivamus quis dignissim risus. Maecenas rhoncus imperdiet nulla sed congue. Duis id lacus felis. Aenean maximus accumsan urna. Etiam aliquam tortor justo, ut tempus orci sollicitudin ut. Fusce tristique enim ex, ac efficitur ipsum tincidunt vitae. Phasellus a imperdiet nisi, sit amet mattis dui. Nulla elementum pretium mi, at laoreet lectus semper nec. Proin vehicula a arcu in efficitur. Curabitur et fringilla ipsum.
-
-Proin in pharetra erat. Proin ullamcorper ligula sapien. Aenean dapibus justo ante, quis scelerisque est tincidunt ac. Nam eget felis nec metus tincidunt convallis. Donec lacinia tellus at dictum interdum. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Suspendisse potenti. Mauris nec leo feugiat, blandit metus eget, gravida turpis. Phasellus consectetur lorem ut justo pellentesque volutpat. Donec a risus eu neque consequat scelerisque. In maximus urna ante, sed pharetra felis tincidunt et.
+In general, the results of the original publication were found to be reproducible, at least from a methodological standpoint if not from an accuracy one. Model specification from the Moen et al. publication was sufficiently clear so as to be replicated and data was provided along with some additional information regarding software, a step above and beyond what is traditionally done. These points aside, there was extensive difficulty in replicating robust standard errors and coefficient estimates of marginal and mixed-effects models. The issue is perhaps more related to implementation of statistical methods across software and not specific to this analysis alone, yet should be a principle concern of the original publication as a major aim was to provide an analysis that was reproducible. Regardless, the Moen et al. analysis was important in proving the shortcomings of recent work within the discipline of neuroscience in regards to statistical methods. Not only did it illuminate the necessity to treat clustered data properly but illustrated that reproducibility is not only a technical question but a methodological concern as well. 
 
 ## References
